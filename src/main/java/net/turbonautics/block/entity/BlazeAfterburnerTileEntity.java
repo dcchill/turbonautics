@@ -62,12 +62,12 @@ public class BlazeAfterburnerTileEntity extends RandomizableContainerBlockEntity
 	private static final int TANK_CAPACITY = 4000;
 	private static final int LAVA_BURN_TIME = 20000;
 	private static final int SUPERHEATED_BURN_TIME = 3200;
-	private static final double THRUST_PER_SIGNAL_SQUARED = 3.50d;
-	private static final double AIRFLOW_PER_SIGNAL = 4.50d;
+	private static final double THRUST_PER_SIGNAL_SQUARED = 2.00d;
+	private static final double AIRFLOW_PER_SIGNAL = 2.50d;
 	private static final double SUPERHEATED_THRUST_MULTIPLIER = 1.75d;
 	private static final double SUPERHEATED_AIRFLOW_MULTIPLIER = 1.4d;
-	private static final double INTAKE_THRUST_MULTIPLIER = 1.35d;
-	private static final double INTAKE_AIRFLOW_MULTIPLIER = 1.2d;
+	private static final double INTAKE_THRUST_MULTIPLIER = 2.25d;
+	private static final double INTAKE_AIRFLOW_MULTIPLIER = 2.0d;
 	private static final double EXHAUST_LENGTH = 2.25d;
 	private static final double EXHAUST_RADIUS = 0.45d;
 	private static final float EXHAUST_DAMAGE = 3.0f;

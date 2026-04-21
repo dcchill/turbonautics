@@ -1,0 +1,11 @@
+{
+  "priority": 1100,
+  "title": {
+    "text": { "translate": "turbonautics.simulated_section.turbonautics" },
+    "background": "#bb4c1f08",
+    "color": "#ffffd284",
+    "secondary_color": "#ffff9a3d"
+  },
+  "sprite": "turbonautics:banner",
+  "only_animate_on_hover": true
+}

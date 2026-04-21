@@ -77,6 +77,18 @@
           "src/main/resources/assets/turbonautics/models/block/intake.json"
         ]
       }
+    },
+    {
+      "name": "IntakeRecipe",
+      "type": "recipe",
+      "compiles": true,
+      "locked_code": true,
+      "registry_name": "intake_recipe",
+      "metadata": {
+        "files": [
+          "src/main/resources/data/turbonautics/recipe/intake_recipe.json"
+        ]
+      }
     }
   ],
   "variable_elements": [],
@@ -109,7 +121,8 @@
       "info.turbonautics.block.blaze_afterburner": "Provides thrust when fueled.  Scales with redstone signal strength.",
       "info.turbonautics.block.intake": "Gives more thrust to Blaze Afterburners",
       "info.turbonautics.item.bucket_of_jetfuel": "Superheats Blaze Afterburners.",
-      "info.turbonautics.shift_for_info": "Hold [Shift] For Summary"
+      "info.turbonautics.shift_for_info": "Hold [Shift] For Summary",
+      "turbonautics.simulated_section.turbonautics": "Turbonautics"
     }
   },
   "metadata": {

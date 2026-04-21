@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "aaa",
+    "ab ",
+    "a  "
+  ],
+  "key": {
+    "a": {
+      "item": "minecraft:iron_ingot"
+    },
+    "b": {
+      "item": "create:filter"
+    }
+  },
+  "result": {
+    "id": "turbonautics:intake",
+    "count": 1
+  }
+}
