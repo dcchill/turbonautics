@@ -1,0 +1,176 @@
+package net.turbonautics.block;
+
+import net.turbonautics.init.TurbonauticsModBlockEntities;
+import net.turbonautics.block.entity.BlazeAfterburnerTileEntity;
+
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.DirectionalBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemInteractionResult;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.Containers;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.Blocks;
+
+import javax.annotation.Nullable;
+
+import java.util.List;
+import java.util.Collections;
+
+import com.mojang.serialization.MapCodec;
+
+public class BlazeAfterburnerBlock extends BaseEntityBlock implements EntityBlock {
+	public static final IntegerProperty ANIMATION = IntegerProperty.create("animation", 0, (int) 1);
+	public static final DirectionProperty FACING = DirectionalBlock.FACING;
+	public static final MapCodec<BlazeAfterburnerBlock> CODEC = simpleCodec(properties -> new BlazeAfterburnerBlock());
+
+	public MapCodec<BlazeAfterburnerBlock> codec() {
+		return CODEC;
+	}
+
+	public BlazeAfterburnerBlock() {
+		super(BlockBehaviour.Properties.of().sound(SoundType.METAL).strength(1f, 10f).noOcclusion().isRedstoneConductor((bs, br, bp) -> false));
+		this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(ANIMATION, 0));
+	}
+
+	@Override
+	public RenderShape getRenderShape(BlockState state) {
+		return RenderShape.ENTITYBLOCK_ANIMATED;
+	}
+
+	@Nullable
+	@Override
+	public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
+		return TurbonauticsModBlockEntities.BLAZE_AFTERBURNER.get().create(blockPos, blockState);
+	}
+
+	@Nullable
+	@Override
+	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
+		return createTickerHelper(blockEntityType, (BlockEntityType<BlazeAfterburnerTileEntity>) TurbonauticsModBlockEntities.BLAZE_AFTERBURNER.get(), BlazeAfterburnerTileEntity::serverTick);
+	}
+
+	@Override
+	public boolean propagatesSkylightDown(BlockState state, BlockGetter reader, BlockPos pos) {
+		return true;
+	}
+
+	@Override
+	public int getLightBlock(BlockState state, BlockGetter worldIn, BlockPos pos) {
+		return 0;
+	}
+
+	@Override
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+		builder.add(ANIMATION, FACING);
+	}
+
+	@Override
+	public BlockState getStateForPlacement(BlockPlaceContext context) {
+		Direction facing = context.getClickedFace();
+		return canAttach(context.getLevel(), context.getClickedPos(), facing) ? this.defaultBlockState().setValue(FACING, facing) : null;
+	}
+
+	@Override
+	protected boolean canSurvive(BlockState state, net.minecraft.world.level.LevelReader level, BlockPos pos) {
+		return canAttach(level, pos, state.getValue(FACING));
+	}
+
+	@Override
+	protected BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, net.minecraft.world.level.LevelAccessor level, BlockPos currentPos, BlockPos neighborPos) {
+		return direction == state.getValue(FACING).getOpposite() && !state.canSurvive(level, currentPos) ? Blocks.AIR.defaultBlockState() : super.updateShape(state, direction, neighborState, level, currentPos, neighborPos);
+	}
+
+	private static boolean canAttach(LevelReader level, BlockPos pos, Direction facing) {
+		BlockPos supportPos = pos.relative(facing.getOpposite());
+		return Block.canSupportCenter(level, supportPos, facing);
+	}
+
+	public BlockState rotate(BlockState state, Rotation rot) {
+		return state.setValue(FACING, rot.rotate(state.getValue(FACING)));
+	}
+
+	public BlockState mirror(BlockState state, Mirror mirrorIn) {
+		return state.rotate(mirrorIn.getRotation(state.getValue(FACING)));
+	}
+
+	@Override
+	public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
+		List<ItemStack> dropsOriginal = super.getDrops(state, builder);
+		if (!dropsOriginal.isEmpty())
+			return dropsOriginal;
+		return Collections.singletonList(new ItemStack(this, 1));
+	}
+
+	@Override
+	public MenuProvider getMenuProvider(BlockState state, Level worldIn, BlockPos pos) {
+		BlockEntity tileEntity = worldIn.getBlockEntity(pos);
+		return tileEntity instanceof MenuProvider menuProvider ? menuProvider : null;
+	}
+
+	@Override
+	public boolean triggerEvent(BlockState state, Level world, BlockPos pos, int eventID, int eventParam) {
+		super.triggerEvent(state, world, pos, eventID, eventParam);
+		BlockEntity blockEntity = world.getBlockEntity(pos);
+		return blockEntity == null ? false : blockEntity.triggerEvent(eventID, eventParam);
+	}
+
+	@Override
+	protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+		BlockEntity blockEntity = level.getBlockEntity(pos);
+		if (blockEntity instanceof BlazeAfterburnerTileEntity afterburner && afterburner.tryFuelFromInteraction(player, hand, stack)) {
+			return ItemInteractionResult.SUCCESS;
+		}
+		return super.useItemOn(stack, state, level, pos, player, hand, hitResult);
+	}
+
+	@Override
+	public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean isMoving) {
+		if (state.getBlock() != newState.getBlock()) {
+			BlockEntity blockEntity = world.getBlockEntity(pos);
+			if (blockEntity instanceof BlazeAfterburnerTileEntity be) {
+				Containers.dropContents(world, pos, be);
+				world.updateNeighbourForOutputSignal(pos, this);
+			}
+			super.onRemove(state, world, pos, newState, isMoving);
+		}
+	}
+
+	@Override
+	public boolean hasAnalogOutputSignal(BlockState state) {
+		return true;
+	}
+
+	@Override
+	public int getAnalogOutputSignal(BlockState blockState, Level world, BlockPos pos) {
+		BlockEntity tileentity = world.getBlockEntity(pos);
+		if (tileentity instanceof BlazeAfterburnerTileEntity be)
+			return AbstractContainerMenu.getRedstoneSignalFromContainer(be);
+		else
+			return 0;
+	}
+}

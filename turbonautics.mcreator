@@ -1,0 +1,79 @@
+{
+  "mod_elements": [
+    {
+      "name": "BlazeAfterburner",
+      "type": "animatedblock",
+      "compiles": true,
+      "locked_code": true,
+      "registry_name": "blaze_afterburner",
+      "metadata": {
+        "files": [
+          "src/main/java/net/turbonautics/block/entity/BlazeAfterburnerTileEntity.java",
+          "src/main/java/net/turbonautics/block/model/BlazeAfterburnerDisplayModel.java",
+          "src/main/java/net/turbonautics/block/display/BlazeAfterburnerDisplayItem.java",
+          "src/main/java/net/turbonautics/block/renderer/BlazeAfterburnerTileRenderer.java",
+          "src/main/java/net/turbonautics/block/model/BlazeAfterburnerBlockModel.java",
+          "src/main/java/net/turbonautics/block/renderer/BlazeAfterburnerDisplayItemRenderer.java",
+          "src/main/resources/assets/turbonautics/blockstates/blaze_afterburner.json",
+          "src/main/resources/assets/turbonautics/models/custom/blaze_afterburner_particle.json",
+          "src/main/java/net/turbonautics/block/BlazeAfterburnerBlock.java",
+          "src/main/resources/assets/turbonautics/models/item/blaze_afterburner.json"
+        ]
+      }
+    },
+    {
+      "name": "Turbonautics",
+      "type": "tab",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "turbonautics",
+      "metadata": {
+        "files": []
+      }
+    }
+  ],
+  "variable_elements": [],
+  "sound_elements": [],
+  "tag_elements": {},
+  "tab_element_order": {},
+  "language_map": {
+    "en_us": {
+      "block.turbonautics.blaze_afterburner": "Blaze Afterburner",
+      "item_group.turbonautics.turbonautics": "Turbonautics"
+    }
+  },
+  "metadata": {
+    "files": [
+      "src/main/resources/META-INF/neoforge.mods.toml",
+      "src/main/java/net/turbonautics/TurbonauticsMod.java",
+      "src/main/resources/pack.mcmeta",
+      "src/main/java/net/turbonautics/block/listener/ClientListener.java",
+      "src/main/java/net/turbonautics/init/TurbonauticsModBlocks.java",
+      "src/main/java/net/turbonautics/init/TurbonauticsModBlockEntities.java",
+      "src/main/java/net/turbonautics/init/TurbonauticsModItems.java"
+    ]
+  },
+  "foldersRoot": {
+    "name": "~",
+    "children": []
+  },
+  "workspaceSettings": {
+    "modid": "turbonautics",
+    "modName": "turbonautics",
+    "version": "1.0.0",
+    "author": "MCreator",
+    "websiteURL": "https://mcreator.net",
+    "license": "Not specified",
+    "serverSideOnly": false,
+    "requiredMods": [],
+    "dependencies": [],
+    "dependants": [],
+    "mcreatorDependencies": [
+      "geckolib"
+    ],
+    "currentGenerator": "neoforge-1.21.1",
+    "credits": "Created using mod maker MCreator - https://mcreator.net/about",
+    "modElementsPackage": "net.turbonautics"
+  },
+  "mcreatorVersion": 202500228610
+}
