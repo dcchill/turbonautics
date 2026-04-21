@@ -25,12 +25,12 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.ItemInteractionResult;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.Containers;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
@@ -91,23 +91,17 @@ public class BlazeAfterburnerBlock extends BaseEntityBlock implements EntityBloc
 
 	@Override
 	public BlockState getStateForPlacement(BlockPlaceContext context) {
-		Direction facing = context.getClickedFace();
-		return canAttach(context.getLevel(), context.getClickedPos(), facing) ? this.defaultBlockState().setValue(FACING, facing) : null;
+		return this.defaultBlockState().setValue(FACING, context.getClickedFace());
 	}
 
 	@Override
 	protected boolean canSurvive(BlockState state, net.minecraft.world.level.LevelReader level, BlockPos pos) {
-		return canAttach(level, pos, state.getValue(FACING));
+		return true;
 	}
 
 	@Override
 	protected BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, net.minecraft.world.level.LevelAccessor level, BlockPos currentPos, BlockPos neighborPos) {
-		return direction == state.getValue(FACING).getOpposite() && !state.canSurvive(level, currentPos) ? Blocks.AIR.defaultBlockState() : super.updateShape(state, direction, neighborState, level, currentPos, neighborPos);
-	}
-
-	private static boolean canAttach(LevelReader level, BlockPos pos, Direction facing) {
-		BlockPos supportPos = pos.relative(facing.getOpposite());
-		return Block.canSupportCenter(level, supportPos, facing);
+		return super.updateShape(state, direction, neighborState, level, currentPos, neighborPos);
 	}
 
 	public BlockState rotate(BlockState state, Rotation rot) {

@@ -30,6 +30,18 @@
       "metadata": {
         "files": []
       }
+    },
+    {
+      "name": "BlazeAfterburnerRecipe",
+      "type": "recipe",
+      "compiles": true,
+      "locked_code": true,
+      "registry_name": "blaze_afterburner_recipe",
+      "metadata": {
+        "files": [
+          "src/main/resources/data/turbonautics/recipe/blaze_afterburner_recipe.json"
+        ]
+      }
     }
   ],
   "variable_elements": [],
@@ -55,7 +67,12 @@
   },
   "foldersRoot": {
     "name": "~",
-    "children": []
+    "children": [
+      {
+        "name": "jetfuel",
+        "children": []
+      }
+    ]
   },
   "workspaceSettings": {
     "modid": "turbonautics",
