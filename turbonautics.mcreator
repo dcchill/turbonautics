@@ -42,24 +42,85 @@
           "src/main/resources/data/turbonautics/recipe/blaze_afterburner_recipe.json"
         ]
       }
+    },
+    {
+      "name": "JetFuel",
+      "type": "fluid",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "jet_fuel",
+      "metadata": {
+        "files": [
+          "src/main/java/net/turbonautics/fluid/types/JetFuelFluidType.java",
+          "src/main/resources/assets/turbonautics/blockstates/jet_fuel.json",
+          "src/main/resources/assets/turbonautics/models/item/jet_fuel_bucket.json",
+          "src/main/java/net/turbonautics/item/JetFuelItem.java",
+          "src/main/resources/assets/turbonautics/models/block/jet_fuel.json",
+          "src/main/java/net/turbonautics/fluid/JetFuelFluid.java",
+          "src/main/java/net/turbonautics/block/JetFuelBlock.java"
+        ]
+      },
+      "path": "~/jetfuel"
+    },
+    {
+      "name": "Intake",
+      "type": "block",
+      "compiles": true,
+      "locked_code": false,
+      "registry_name": "intake",
+      "metadata": {
+        "files": [
+          "src/main/resources/assets/turbonautics/blockstates/intake.json",
+          "src/main/resources/data/turbonautics/loot_table/blocks/intake.json",
+          "src/main/resources/assets/turbonautics/models/item/intake.json",
+          "src/main/java/net/turbonautics/block/IntakeBlock.java",
+          "src/main/resources/assets/turbonautics/models/block/intake.json"
+        ]
+      }
     }
   ],
   "variable_elements": [],
   "sound_elements": [],
-  "tag_elements": {},
+  "tag_elements": {
+    "BLOCKS:minecraft:replaceable": [
+      "~CUSTOM:JetFuel"
+    ],
+    "BLOCKS:minecraft:mineable/pickaxe": [
+      "~CUSTOM:Intake"
+    ],
+    "BLOCKS:minecraft:needs_iron_tool": [
+      "~CUSTOM:Intake"
+    ],
+    "BLOCKS:create:wrench_pickup": [
+      "CUSTOM:Intake",
+      "CUSTOM:BlazeAfterburner"
+    ]
+  },
   "tab_element_order": {},
   "language_map": {
     "en_us": {
       "block.turbonautics.blaze_afterburner": "Blaze Afterburner",
-      "item_group.turbonautics.turbonautics": "Turbonautics"
+      "item_group.turbonautics.turbonautics": "Turbonautics",
+      "fluid_type.turbonautics.jet_fuel": "Jet Fuel",
+      "item.turbonautics.jet_fuel_bucket": "Jet Fuel Bucket",
+      "block.turbonautics.jet_fuel": "Jet Fuel",
+      "fluid.turbonautics.jet_fuel": "Jet Fuel",
+      "block.turbonautics.intake": "Intake",
+      "info.turbonautics.block.blaze_afterburner": "Provides thrust when fueled.  Scales with redstone signal strength.",
+      "info.turbonautics.block.intake": "Gives more thrust to Blaze Afterburners",
+      "info.turbonautics.item.bucket_of_jetfuel": "Superheats Blaze Afterburners.",
+      "info.turbonautics.shift_for_info": "Hold [Shift] For Summary"
     }
   },
   "metadata": {
     "files": [
       "src/main/resources/META-INF/neoforge.mods.toml",
+      "src/main/java/net/turbonautics/init/TurbonauticsModTabs.java",
       "src/main/java/net/turbonautics/TurbonauticsMod.java",
       "src/main/resources/pack.mcmeta",
       "src/main/java/net/turbonautics/block/listener/ClientListener.java",
+      "src/main/java/net/turbonautics/init/TurbonauticsModFluidTypes.java",
+      "src/main/java/net/turbonautics/init/TurbonauticsModFluids.java",
       "src/main/java/net/turbonautics/init/TurbonauticsModBlocks.java",
       "src/main/java/net/turbonautics/init/TurbonauticsModBlockEntities.java",
       "src/main/java/net/turbonautics/init/TurbonauticsModItems.java"

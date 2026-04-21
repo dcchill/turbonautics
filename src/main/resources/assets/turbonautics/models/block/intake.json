@@ -1,0 +1,9 @@
+{
+  "parent": "turbonautics:custom/intake",
+  "textures": {
+    "all": "turbonautics:block/industrial_iron_block",
+    "particle": "turbonautics:block/industrial_iron_block",
+    "0": "turbonautics:block/intake"
+  },
+  "render_type": "solid"
+}

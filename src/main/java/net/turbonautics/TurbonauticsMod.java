@@ -3,7 +3,10 @@ package net.turbonautics;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
+import net.turbonautics.init.TurbonauticsModTabs;
 import net.turbonautics.init.TurbonauticsModItems;
+import net.turbonautics.init.TurbonauticsModFluids;
+import net.turbonautics.init.TurbonauticsModFluidTypes;
 import net.turbonautics.init.TurbonauticsModBlocks;
 import net.turbonautics.init.TurbonauticsModBlockEntities;
 
@@ -50,6 +53,11 @@ public class TurbonauticsMod {
 		TurbonauticsModBlocks.REGISTRY.register(modEventBus);
 		TurbonauticsModBlockEntities.REGISTRY.register(modEventBus);
 		TurbonauticsModItems.REGISTRY.register(modEventBus);
+
+		TurbonauticsModTabs.REGISTRY.register(modEventBus);
+
+		TurbonauticsModFluids.REGISTRY.register(modEventBus);
+		TurbonauticsModFluidTypes.REGISTRY.register(modEventBus);
 
 		// Start of user code block mod init
 		// End of user code block mod init

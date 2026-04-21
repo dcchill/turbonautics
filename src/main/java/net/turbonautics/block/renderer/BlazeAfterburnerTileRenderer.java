@@ -39,6 +39,7 @@ public class BlazeAfterburnerTileRenderer extends GeoBlockRenderer<BlazeAfterbur
 			}
 			case SOUTH -> {
 				poseStack.translate(0, 0.5, -0.5);
+				poseStack.mulPose(Axis.XN.rotationDegrees(-90));
 			}
 			case EAST -> {
 				poseStack.translate(-0.5, 0.5, 0);

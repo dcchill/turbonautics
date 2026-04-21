@@ -1,4 +1,13 @@
 {
   "block.turbonautics.blaze_afterburner": "Blaze Afterburner",
-  "item_group.turbonautics.turbonautics": "Turbonautics"
+  "item_group.turbonautics.turbonautics": "Turbonautics",
+  "fluid_type.turbonautics.jet_fuel": "Jet Fuel",
+  "item.turbonautics.jet_fuel_bucket": "Jet Fuel Bucket",
+  "block.turbonautics.jet_fuel": "Jet Fuel",
+  "fluid.turbonautics.jet_fuel": "Jet Fuel",
+  "block.turbonautics.intake": "Intake",
+  "info.turbonautics.block.blaze_afterburner": "Provides thrust when fueled.  Scales with redstone signal strength.",
+  "info.turbonautics.block.intake": "Gives more thrust to Blaze Afterburners",
+  "info.turbonautics.item.bucket_of_jetfuel": "Superheats Blaze Afterburners.",
+  "info.turbonautics.shift_for_info": "Hold [Shift] For Summary"
 }

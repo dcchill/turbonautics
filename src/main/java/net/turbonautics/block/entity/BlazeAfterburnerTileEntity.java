@@ -13,6 +13,8 @@ import dev.ryanhcode.sable.api.block.propeller.BlockEntityPropeller;
 import dev.ryanhcode.sable.api.block.propeller.BlockEntitySubLevelPropellerActor;
 
 import net.turbonautics.init.TurbonauticsModBlockEntities;
+import net.turbonautics.init.TurbonauticsModBlocks;
+import net.turbonautics.init.TurbonauticsModFluids;
 import net.turbonautics.block.BlazeAfterburnerBlock;
 
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
@@ -56,7 +58,7 @@ import java.util.stream.IntStream;
 
 public class BlazeAfterburnerTileEntity extends RandomizableContainerBlockEntity implements GeoBlockEntity, WorldlyContainer, BlockEntityPropeller, BlockEntitySubLevelPropellerActor {
 	private static final int FUEL_SLOT = 0;
-	private static final int LAVA_PER_BURN = 1000;
+	private static final int FLUID_PER_BURN = 1000;
 	private static final int TANK_CAPACITY = 4000;
 	private static final int LAVA_BURN_TIME = 20000;
 	private static final int SUPERHEATED_BURN_TIME = 3200;
@@ -64,14 +66,17 @@ public class BlazeAfterburnerTileEntity extends RandomizableContainerBlockEntity
 	private static final double AIRFLOW_PER_SIGNAL = 4.50d;
 	private static final double SUPERHEATED_THRUST_MULTIPLIER = 1.75d;
 	private static final double SUPERHEATED_AIRFLOW_MULTIPLIER = 1.4d;
+	private static final double INTAKE_THRUST_MULTIPLIER = 1.35d;
+	private static final double INTAKE_AIRFLOW_MULTIPLIER = 1.2d;
 	private static final double EXHAUST_LENGTH = 2.25d;
 	private static final double EXHAUST_RADIUS = 0.45d;
 	private static final float EXHAUST_DAMAGE = 3.0f;
 	private static final ResourceLocation BLAZE_CAKE_ID = ResourceLocation.fromNamespaceAndPath("create", "blaze_cake");
+	private static final ResourceLocation JET_FUEL_BUCKET_ID = ResourceLocation.fromNamespaceAndPath("turbonautics", "jet_fuel_bucket");
 	private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 	private NonNullList<ItemStack> stacks = NonNullList.<ItemStack>withSize(9, ItemStack.EMPTY);
 	private final SidedInvWrapper handler = new SidedInvWrapper(this, null);
-	private final FluidTank lavaTank = new FluidTank(TANK_CAPACITY, fluid -> fluid.getFluid() == Fluids.LAVA) {
+	private final FluidTank lavaTank = new FluidTank(TANK_CAPACITY, fluid -> fluid.getFluid() == Fluids.LAVA || fluid.getFluid() == TurbonauticsModFluids.JET_FUEL.get()) {
 		@Override
 		protected void onContentsChanged() {
 			setChanged();
@@ -218,7 +223,7 @@ public class BlazeAfterburnerTileEntity extends RandomizableContainerBlockEntity
 
 	@Override
 	public boolean canPlaceItem(int index, ItemStack stack) {
-		return index == FUEL_SLOT && (stack.is(Items.LAVA_BUCKET) || stack.getBurnTime(null) > 0);
+		return index == FUEL_SLOT && (stack.is(Items.LAVA_BUCKET) || isJetFuelBucket(stack) || stack.getBurnTime(null) > 0);
 	}
 
 	@Override
@@ -251,13 +256,13 @@ public class BlazeAfterburnerTileEntity extends RandomizableContainerBlockEntity
 
 	@Override
 	public double getAirflow() {
-		return isActive() ? getRedstoneSignal() * AIRFLOW_PER_SIGNAL * getHeatAirflowMultiplier() : 0;
+		return isActive() ? getRedstoneSignal() * AIRFLOW_PER_SIGNAL * getHeatAirflowMultiplier() * getIntakeAirflowMultiplier() : 0;
 	}
 
 	@Override
 	public double getThrust() {
 		int signal = getRedstoneSignal();
-		return isActive() ? signal * signal * THRUST_PER_SIGNAL_SQUARED * getHeatThrustMultiplier() : 0;
+		return isActive() ? signal * signal * THRUST_PER_SIGNAL_SQUARED * getHeatThrustMultiplier() * getIntakeThrustMultiplier() : 0;
 	}
 
 	@Override
@@ -313,6 +318,16 @@ public class BlazeAfterburnerTileEntity extends RandomizableContainerBlockEntity
 			return true;
 		}
 
+		if (isJetFuelBucket(stack)) {
+			if (!player.getAbilities().instabuild) {
+				player.setItemInHand(hand, new ItemStack(Items.BUCKET));
+			}
+			this.burnTimeRemaining += SUPERHEATED_BURN_TIME;
+			this.heatState = HeatState.SUPERHEATED;
+			syncState();
+			return true;
+		}
+
 		int burnTime = stack.getBurnTime(null);
 		if (burnTime <= 0) {
 			return false;
@@ -354,14 +369,27 @@ public class BlazeAfterburnerTileEntity extends RandomizableContainerBlockEntity
 	}
 
 	private boolean tryConsumeFuel() {
-		if (this.lavaTank.getFluidAmount() >= LAVA_PER_BURN) {
-			this.lavaTank.drain(LAVA_PER_BURN, IFluidHandler.FluidAction.EXECUTE);
-			this.burnTimeRemaining = LAVA_BURN_TIME;
-			this.heatState = HeatState.NORMAL;
+		if (this.lavaTank.getFluidAmount() >= FLUID_PER_BURN) {
+			FluidStack storedFluid = this.lavaTank.getFluid();
+			this.lavaTank.drain(FLUID_PER_BURN, IFluidHandler.FluidAction.EXECUTE);
+			if (storedFluid.getFluid() == TurbonauticsModFluids.JET_FUEL.get()) {
+				this.burnTimeRemaining = SUPERHEATED_BURN_TIME;
+				this.heatState = HeatState.SUPERHEATED;
+			} else {
+				this.burnTimeRemaining = LAVA_BURN_TIME;
+				this.heatState = HeatState.NORMAL;
+			}
 			return true;
 		}
 
 		ItemStack stack = this.stacks.get(FUEL_SLOT);
+		if (isJetFuelBucket(stack)) {
+			this.stacks.set(FUEL_SLOT, new ItemStack(Items.BUCKET));
+			this.burnTimeRemaining = SUPERHEATED_BURN_TIME;
+			this.heatState = HeatState.SUPERHEATED;
+			return true;
+		}
+
 		int burnTime = stack.getBurnTime(null);
 		if (burnTime <= 0) {
 			return false;
@@ -407,12 +435,34 @@ public class BlazeAfterburnerTileEntity extends RandomizableContainerBlockEntity
 		return blazeCake != Items.AIR && stack.is(blazeCake);
 	}
 
+	private boolean isJetFuelBucket(ItemStack stack) {
+		Item jetFuelBucket = BuiltInRegistries.ITEM.get(JET_FUEL_BUCKET_ID);
+		return jetFuelBucket != Items.AIR && stack.is(jetFuelBucket);
+	}
+
 	private double getHeatThrustMultiplier() {
 		return this.heatState == HeatState.SUPERHEATED ? SUPERHEATED_THRUST_MULTIPLIER : 1d;
 	}
 
 	private double getHeatAirflowMultiplier() {
 		return this.heatState == HeatState.SUPERHEATED ? SUPERHEATED_AIRFLOW_MULTIPLIER : 1d;
+	}
+
+	private double getIntakeThrustMultiplier() {
+		return hasIntakeOnInletSide() ? INTAKE_THRUST_MULTIPLIER : 1d;
+	}
+
+	private double getIntakeAirflowMultiplier() {
+		return hasIntakeOnInletSide() ? INTAKE_AIRFLOW_MULTIPLIER : 1d;
+	}
+
+	private boolean hasIntakeOnInletSide() {
+		if (this.level == null) {
+			return false;
+		}
+
+		BlockPos intakePos = this.worldPosition.relative(getBlockDirection().getOpposite());
+		return this.level.getBlockState(intakePos).is(TurbonauticsModBlocks.INTAKE.get());
 	}
 
 	private void syncState() {
