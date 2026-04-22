@@ -16,6 +16,7 @@ import net.turbonautics.init.TurbonauticsModBlockEntities;
 import net.turbonautics.init.TurbonauticsModBlocks;
 import net.turbonautics.init.TurbonauticsModFluids;
 import net.turbonautics.block.BlazeAfterburnerBlock;
+import net.turbonautics.block.IntakeBlock;
 
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
@@ -70,6 +71,7 @@ public class BlazeAfterburnerTileEntity extends RandomizableContainerBlockEntity
 	private static final double INTAKE_AIRFLOW_MULTIPLIER = 2.0d;
 	private static final double EXHAUST_LENGTH = 2.25d;
 	private static final double EXHAUST_RADIUS = 0.45d;
+	private static final double INTAKE_EFFECT_MIN_SPEED = 0.12d;
 	private static final float EXHAUST_DAMAGE = 3.0f;
 	private static final ResourceLocation BLAZE_CAKE_ID = ResourceLocation.fromNamespaceAndPath("create", "blaze_cake");
 	private static final ResourceLocation JET_FUEL_BUCKET_ID = ResourceLocation.fromNamespaceAndPath("turbonautics", "jet_fuel_bucket");
@@ -354,10 +356,8 @@ public class BlazeAfterburnerTileEntity extends RandomizableContainerBlockEntity
 		double signalScale = getSignalScale();
 
 		if (level instanceof ServerLevel serverLevel) {
-			double speed = 0.15d + signalScale * 0.45d;
-			Vec3 velocity = direction.scale(speed);
-			serverLevel.sendParticles(ParticleTypes.SMOKE, origin.x, origin.y, origin.z, 6, velocity.x, velocity.y, velocity.z, 0.02);
-			serverLevel.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE, origin.x, origin.y, origin.z, 2, velocity.x, velocity.y, velocity.z, 0.01);
+			emitExhaustParticles(serverLevel, origin, direction, signalScale);
+			emitIntakeParticles(serverLevel);
 		}
 
 		Vec3 end = origin.add(direction.scale(EXHAUST_LENGTH));
@@ -365,6 +365,103 @@ public class BlazeAfterburnerTileEntity extends RandomizableContainerBlockEntity
 		for (Entity entity : level.getEntities((Entity) null, exhaustBox, entity -> entity.isAlive() && !entity.fireImmune())) {
 			entity.setRemainingFireTicks(Math.max(entity.getRemainingFireTicks(), 60));
 			entity.hurt(level.damageSources().inFire(), EXHAUST_DAMAGE);
+		}
+	}
+
+	private void emitExhaustParticles(ServerLevel serverLevel, Vec3 origin, Vec3 direction, double signalScale) {
+		Vec3 right = direction.cross(new Vec3(0, 1, 0));
+		if (right.lengthSqr() < 1.0E-4d) {
+			right = direction.cross(new Vec3(1, 0, 0));
+		}
+		right = right.normalize();
+		Vec3 up = right.cross(direction).normalize();
+
+		double streamRadius = 0.07d + signalScale * 0.03d;
+		double smokeSpeed = 0.20d + signalScale * 0.45d;
+		double cozySmokeSpeed = smokeSpeed * 0.85d;
+
+		for (int i = 0; i < 8; i++) {
+			spawnStreamParticle(serverLevel, ParticleTypes.SMOKE, origin, direction, right, up, streamRadius, smokeSpeed);
+		}
+		for (int i = 0; i < 3; i++) {
+			spawnStreamParticle(serverLevel, ParticleTypes.CAMPFIRE_COSY_SMOKE, origin, direction, right, up, streamRadius * 0.75d, cozySmokeSpeed);
+		}
+	}
+
+	private void spawnStreamParticle(ServerLevel serverLevel, net.minecraft.core.particles.ParticleOptions particleType, Vec3 origin, Vec3 direction, Vec3 right, Vec3 up, double radius, double speed) {
+		double lateralOffset = (serverLevel.random.nextDouble() - 0.5d) * radius;
+		double verticalOffset = (serverLevel.random.nextDouble() - 0.5d) * radius;
+		Vec3 spawnPos = origin.add(right.scale(lateralOffset)).add(up.scale(verticalOffset));
+		Vec3 velocity = direction.scale(speed)
+			.add(right.scale(lateralOffset * 0.08d))
+			.add(up.scale(verticalOffset * 0.08d));
+		serverLevel.sendParticles(particleType, spawnPos.x, spawnPos.y, spawnPos.z, 0, velocity.x, velocity.y, velocity.z, 1.0d);
+	}
+
+	private void emitIntakeParticles(ServerLevel serverLevel) {
+		BlockPos intakePos = getIntakePos();
+		BlockState intakeState = serverLevel.getBlockState(intakePos);
+		if (!intakeState.is(TurbonauticsModBlocks.INTAKE.get())) {
+			return;
+		}
+
+		Vec3 craftVelocity = getSubLevelVelocity(intakePos);
+		double speed = craftVelocity.length();
+		if (speed < INTAKE_EFFECT_MIN_SPEED) {
+			return;
+		}
+
+		Vec3 intakeDirection = Vec3.atLowerCornerOf(intakeState.getValue(IntakeBlock.FACING).getNormal()).normalize();
+		Vec3 inwardDirection = intakeDirection.scale(-1.0d);
+		Vec3 right = intakeDirection.cross(new Vec3(0, 1, 0));
+		if (right.lengthSqr() < 1.0E-4d) {
+			right = intakeDirection.cross(new Vec3(1, 0, 0));
+		}
+		right = right.normalize();
+		Vec3 up = right.cross(intakeDirection).normalize();
+		Vec3 mouthCenter = Vec3.atCenterOf(intakePos).add(intakeDirection.scale(0.72d));
+
+		double streamRadius = 0.09d;
+		double intakeSpeed = Math.min(0.34d, 0.06d + speed * 0.025d);
+		for (int i = 0; i < 3; i++) {
+			spawnStreamParticle(serverLevel, ParticleTypes.CLOUD, mouthCenter, inwardDirection, right, up, streamRadius, intakeSpeed);
+		}
+		for (int i = 0; i < 1; i++) {
+			spawnStreamParticle(serverLevel, ParticleTypes.POOF, mouthCenter, inwardDirection, right, up, streamRadius * 0.55d, intakeSpeed * 0.55d);
+		}
+	}
+
+	private Vec3 getSubLevelVelocity(BlockPos samplePos) {
+		if (this.level == null) {
+			return Vec3.ZERO;
+		}
+
+		try {
+			Class<?> sableClass = Class.forName("dev.ryanhcode.sable.Sable");
+			Object helper = sableClass.getField("HELPER").get(null);
+			Object subLevel = helper.getClass().getMethod("getContaining", Level.class, net.minecraft.core.Vec3i.class).invoke(helper, this.level, samplePos);
+			if (subLevel == null) {
+				return Vec3.ZERO;
+			}
+
+			Vec3 center = Vec3.atCenterOf(samplePos);
+			Class<?> vectorClass = Class.forName("org.joml.Vector3d");
+			Object localPos = vectorClass.getConstructor(double.class, double.class, double.class).newInstance(center.x, center.y, center.z);
+			Object currentPose = subLevel.getClass().getMethod("logicalPose").invoke(subLevel);
+			Object previousPose = subLevel.getClass().getMethod("lastPose").invoke(subLevel);
+			Object currentPos = currentPose.getClass().getMethod("transformPosition", Class.forName("org.joml.Vector3dc"), vectorClass)
+				.invoke(currentPose, localPos, vectorClass.getConstructor().newInstance());
+			Object previousPos = previousPose.getClass().getMethod("transformPosition", Class.forName("org.joml.Vector3dc"), vectorClass)
+				.invoke(previousPose, localPos, vectorClass.getConstructor().newInstance());
+			double currentX = ((Number) vectorClass.getMethod("x").invoke(currentPos)).doubleValue();
+			double currentY = ((Number) vectorClass.getMethod("y").invoke(currentPos)).doubleValue();
+			double currentZ = ((Number) vectorClass.getMethod("z").invoke(currentPos)).doubleValue();
+			double previousX = ((Number) vectorClass.getMethod("x").invoke(previousPos)).doubleValue();
+			double previousY = ((Number) vectorClass.getMethod("y").invoke(previousPos)).doubleValue();
+			double previousZ = ((Number) vectorClass.getMethod("z").invoke(previousPos)).doubleValue();
+			return new Vec3((currentX - previousX) * 20.0d, (currentY - previousY) * 20.0d, (currentZ - previousZ) * 20.0d);
+		} catch (ReflectiveOperationException | LinkageError ignored) {
+			return Vec3.ZERO;
 		}
 	}
 
@@ -461,8 +558,12 @@ public class BlazeAfterburnerTileEntity extends RandomizableContainerBlockEntity
 			return false;
 		}
 
-		BlockPos intakePos = this.worldPosition.relative(getBlockDirection().getOpposite());
+		BlockPos intakePos = getIntakePos();
 		return this.level.getBlockState(intakePos).is(TurbonauticsModBlocks.INTAKE.get());
+	}
+
+	private BlockPos getIntakePos() {
+		return this.worldPosition.relative(getBlockDirection().getOpposite());
 	}
 
 	private void syncState() {
